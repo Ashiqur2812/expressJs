@@ -1,25 +1,43 @@
 import express, { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { client } from '../config/mongodb';
+import { ObjectId } from 'mongodb';
 
 const filePath = path.join(__dirname, '../../../dist/app/db/todo.json');
 
 export const todosRouter = express.Router();
 
-todosRouter.get('/', (req: Request, res: Response) => {
-    const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
-    console.log('From todos router');
-    res.status(200).json({ message: 'From todos router', data });
+const todosCollection = client.db('todosDB').collection('todos')
+
+todosRouter.get('/', async (req: Request, res: Response) => {
+    // const db = await client.db('todosDB');
+    // const collection = await db.collection('todos');
+
+    const cursor = await todosCollection.find({}).toArray();
+    res.status(200).json(cursor);
 });
 
-todosRouter.get('/:title', (req: Request, res: Response) => {
-    console.log('From query', req.query);
-    console.log('From params', req.params);
-    const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
-    res.status(200).json(data);
+todosRouter.get('/:id', async (req: Request, res: Response) => {
+    const id = req.params.id;
+    // const db = await client.db('todosDB');
+    // const collection = await db.collection('todos');
+
+    const filter = { _id: new ObjectId(id) };
+    const todos = await todosCollection.findOne(filter);
+    res.status(200).json(todos);
 });
 
-todosRouter.post('/create-todos', (req: Request, res: Response) => {
-    const { title, body } = req.body;
-    res.status(201).send({ title, body });
+todosRouter.post('/create-todos', async (req: Request, res: Response) => {
+    const { title, description, priority } = req.body;
+
+    await todosCollection.insertOne({
+        title: title,
+        description: description,
+        priority: priority,
+        isCompleted: false
+    });
+
+    const todos = await todosCollection.find({}).toArray()
+    res.status(201).json(todos);
 });

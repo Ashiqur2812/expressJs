@@ -1,26 +1,47 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.todosRouter = void 0;
 const express_1 = __importDefault(require("express"));
-const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const mongodb_1 = require("../config/mongodb");
+const mongodb_2 = require("mongodb");
 const filePath = path_1.default.join(__dirname, '../../../dist/app/db/todo.json');
 exports.todosRouter = express_1.default.Router();
-exports.todosRouter.get('/', (req, res) => {
-    const data = fs_1.default.readFileSync(filePath, { encoding: 'utf-8' });
-    console.log('From todos router');
-    res.status(200).json({ message: 'From todos router', data });
-});
-exports.todosRouter.get('/:title', (req, res) => {
-    console.log('From query', req.query);
-    console.log('From params', req.params);
-    const data = fs_1.default.readFileSync(filePath, { encoding: 'utf-8' });
-    res.status(200).json(data);
-});
-exports.todosRouter.post('/create-todos', (req, res) => {
-    const { title, body } = req.body;
-    res.status(201).send({ title, body });
-});
+const todosCollection = mongodb_1.client.db('todosDB').collection('todos');
+exports.todosRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // const db = await client.db('todosDB');
+    // const collection = await db.collection('todos');
+    const cursor = yield todosCollection.find({}).toArray();
+    res.status(200).json(cursor);
+}));
+exports.todosRouter.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const id = req.params.id;
+    // const db = await client.db('todosDB');
+    // const collection = await db.collection('todos');
+    const filter = { _id: new mongodb_2.ObjectId(id) };
+    const todos = yield todosCollection.findOne(filter);
+    res.status(200).json(todos);
+}));
+exports.todosRouter.post('/create-todos', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { title, description, priority } = req.body;
+    yield todosCollection.insertOne({
+        title: title,
+        description: description,
+        priority: priority,
+        isCompleted: false
+    });
+    const todos = yield todosCollection.find({}).toArray();
+    res.status(201).json(todos);
+}));
