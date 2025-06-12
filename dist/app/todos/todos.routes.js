@@ -28,8 +28,6 @@ exports.todosRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, fun
 }));
 exports.todosRouter.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
-    // const db = await client.db('todosDB');
-    // const collection = await db.collection('todos');
     const filter = { _id: new mongodb_2.ObjectId(id) };
     const todos = yield todosCollection.findOne(filter);
     res.status(200).json(todos);
@@ -44,4 +42,26 @@ exports.todosRouter.post('/create-todos', (req, res) => __awaiter(void 0, void 0
     });
     const todos = yield todosCollection.find({}).toArray();
     res.status(201).json(todos);
+}));
+exports.todosRouter.put('/update-todo/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const id = req.params.id;
+    const { title, description, priority, isCompleted } = req.body;
+    const filter = { _id: new mongodb_2.ObjectId(id) };
+    const upsert = { upsert: true };
+    const updatedTodo = {
+        $set: {
+            title,
+            description,
+            priority,
+            isCompleted
+        }
+    };
+    const result = yield todosCollection.updateOne(filter, updatedTodo, upsert);
+    res.status(201).json(result);
+}));
+exports.todosRouter.delete('/delete-todo/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const id = req.params.id;
+    const filter = { _id: new mongodb_2.ObjectId(id) };
+    yield todosCollection.deleteOne(filter);
+    res.status(200).json({ message: 'The todo is deleted successfully' });
 }));
