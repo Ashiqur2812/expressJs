@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import { todosRouter } from './todos/todos.routes';
 const app: Application = express();
 
@@ -10,21 +10,44 @@ app.use('/todos', todosRouter);
 app.use('/users', userRouter);
 
 
-// app.get('/todos', (req: Request, res: Response) => {
-//     const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
-//     console.log('From app router');
-//     res.status(200).json({ message: 'Data is here', data });
-// });
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Welcome to Todos App');
+app.get('/', (req: Request, res: Response, next: NextFunction) => {
+    console.log({
+        url: req.url,
+        method: req.method,
+        header: req.header
+    });
+    next();
+},
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            console.log('Something went wrong');
+            res.send('Welcome to todos app');
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+app.get('/error', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        console.log('Something is going on here');
+        res.send('Welcome to world of error');
+    } catch (error) {
+        next(error);
+    }
 });
 
-// app.get('/todos/:title', (req: Request, res: Response) => {
-//     console.log('From query', req.query);
-//     console.log('From params', req.params);
-//     const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
-//     res.status(200).json(data);
-// });
+app.use((req: Request, res: Response, next: NextFunction) => {
+    res.status(404).json({ message: 'Route not found' });
+});
+
+app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+    if (error) {
+        console.log('error', error);
+        res.status(400).json({ message: 'Something went wrong from global error handler', error });
+    }
+});
+
 
 export default app;

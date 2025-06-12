@@ -21,8 +21,6 @@ const filePath = path_1.default.join(__dirname, '../../../dist/app/db/todo.json'
 exports.todosRouter = express_1.default.Router();
 const todosCollection = mongodb_1.client.db('todosDB').collection('todos');
 exports.todosRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // const db = await client.db('todosDB');
-    // const collection = await db.collection('todos');
     const cursor = yield todosCollection.find({}).toArray();
     res.status(200).json(cursor);
 }));

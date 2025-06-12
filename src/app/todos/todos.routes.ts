@@ -11,9 +11,6 @@ export const todosRouter = express.Router();
 const todosCollection = client.db('todosDB').collection('todos');
 
 todosRouter.get('/', async (req: Request, res: Response) => {
-    // const db = await client.db('todosDB');
-    // const collection = await db.collection('todos');
-
     const cursor = await todosCollection.find({}).toArray();
     res.status(200).json(cursor);
 });
